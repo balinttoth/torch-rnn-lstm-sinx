@@ -1,2 +1,3 @@
-# torch_rnn-lstm_sinx_example
-Training RNN-LSTM for x->sin(x) 
+# Training RNN-LSTM for x->sin(x) example code
+
+This code (should) learn x->sin(x) mapping.
