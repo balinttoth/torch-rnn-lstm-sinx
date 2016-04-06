@@ -6,3 +6,4 @@ Running:
 ```
 th lstm-sinx.lua
 ```
+The results are stored in output.png. The target and predicted lines should be the same. 
