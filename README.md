@@ -3,6 +3,6 @@
 This code (should) learn x->sin(x) mapping.
 
 Running:
-'''
+```
 th lstm-sinx.lua
-'''
+```
