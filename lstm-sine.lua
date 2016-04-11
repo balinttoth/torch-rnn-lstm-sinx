@@ -95,13 +95,13 @@ num_samples = math.min(batch_size, input:size(2))
 inputs = input[{{}, {1, num_samples}}] -- feeding the train data as input
 
 for i = 1,input:size(2),batch_size do
+  num_samples = math.min(batch_size, input:size(2) - i + 1) 
   --inputs = input[{{}, {i, i+num_samples-1}}] -- feeding the train data as input
   inputs = nn.SplitTable(1):forward(inputs)
   
   local outputs = lstm:forward(inputs)
   -- Since LSTM outputs a table of outputs for each time step, need to combine them
   output[{{}, {i, i+num_samples-1}}] = nn.JoinTable(1):forward(outputs)
-  num_samples = math.min(batch_size, input:size(2) - i + 1) 
   inputs = output[{{}, {i, i+num_samples-1}}]:clone():cuda() -- feeding the output of the neural net as input
 end
 
