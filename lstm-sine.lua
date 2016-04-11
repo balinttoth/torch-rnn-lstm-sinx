@@ -12,7 +12,7 @@ batch_step_size = seq_length -- how many steps between batches
 batch_size = 10 -- size of the batches
 
 max_epochs = 500 -- maximum epochs
-lr = 0.001 -- learning rate
+lr = 0.01 -- learning rate
 mom = 0.9 -- momentum
 
 lstm = nn.Sequencer(
@@ -32,7 +32,7 @@ print(criterion)
 data = torch.Tensor(1000):range(1,1000) --:apply(math.rad):apply(math.sin)*0.8
 -- Simpler data creation
 --input = data:reshape(20, 50, 1)
-input=data:reshape(50,20):t():reshape(20,50,1)
+input=data:reshape(50,20,1):permute(2,1,3) --:reshape(20,50,1)
 
 -- Normalize the data
 input_mean = data:mean()
@@ -44,7 +44,7 @@ input:div(input_std)
 sinus = torch.Tensor(1000):range(seq_length+1,1000+seq_length):apply(math.rad):apply(math.sin)*0.9
 -- Simpler target creation
 --target = sinus:reshape(20, 50, 1)
-target=sinus:reshape(50,20):t():reshape(20,50,1)
+target=sinus:reshape(50,20,1):permute(2,1,3) --:reshape(20,50,1)
 
 -- moving everything to the GPU
 lstm:cuda()
@@ -91,16 +91,22 @@ end
 -- evaluation
 lstm:evaluate()
 output = torch.Tensor(20, 50, 1)
+i_prev=1
+num_samples_prev=batch_size
 for i = 1,input:size(2),batch_size do
   num_samples = math.min(batch_size, input:size(2) - i + 1) 
-  inputs = input[{{}, {i, i+num_samples-1}}]
+  --inputs = input[{{}, {i, i+num_samples-1}}] -- feeding the train data as input
+  inputs = output[{{}, {i_prev, i_prev+num_samples_prev-1}}]:cuda() -- feeding the output of the neural net as input
+
   inputs = nn.SplitTable(1):forward(inputs)
   
   local outputs = lstm:forward(inputs)
   -- Since LSTM outputs a table of outputs for each time step, need to combine them
   output[{{}, {i, i+num_samples-1}}] = nn.JoinTable(1):forward(outputs)
+  i_prev = i
+  num_samples_prev = num_samples
 end
 
 gnuplot.pngfigure("output_2.png")
-gnuplot.plot({'output',output:reshape(1000):float(),'-'}, {'target',sinus,'-'})
+gnuplot.plot({'output',output:permute(2,1,3):reshape(1000):float(),'-'}, {'target',sinus,'-'})
 gnuplot.plotflush()
