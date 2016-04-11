@@ -17,9 +17,9 @@ mom = 0.9 -- momentum
 
 lstm = nn.Sequencer(
    nn.Sequential()
-      :add(nn.Linear(no_param,256))
-      :add(nn.FastLSTM(256, 256))
-      :add(nn.Linear(256,no_param))
+      :add(nn.Linear(no_param,64))
+      :add(nn.FastLSTM(64, 64))
+      :add(nn.Linear(64,no_param))
       :add(nn.Tanh())
    )
 
@@ -91,20 +91,18 @@ end
 -- evaluation
 lstm:evaluate()
 output = torch.Tensor(20, 50, 1)
-i_prev=1
-num_samples_prev=batch_size
-for i = 1,input:size(2),batch_size do
-  num_samples = math.min(batch_size, input:size(2) - i + 1) 
-  --inputs = input[{{}, {i, i+num_samples-1}}] -- feeding the train data as input
-  inputs = output[{{}, {i_prev, i_prev+num_samples_prev-1}}]:cuda() -- feeding the output of the neural net as input
+num_samples = math.min(batch_size, input:size(2)) 
+inputs = input[{{}, {1, num_samples}}] -- feeding the train data as input
 
+for i = 1,input:size(2),batch_size do
+  --inputs = input[{{}, {i, i+num_samples-1}}] -- feeding the train data as input
   inputs = nn.SplitTable(1):forward(inputs)
   
   local outputs = lstm:forward(inputs)
   -- Since LSTM outputs a table of outputs for each time step, need to combine them
   output[{{}, {i, i+num_samples-1}}] = nn.JoinTable(1):forward(outputs)
-  i_prev = i
-  num_samples_prev = num_samples
+  num_samples = math.min(batch_size, input:size(2) - i + 1) 
+  inputs = output[{{}, {i, i+num_samples-1}}]:clone():cuda() -- feeding the output of the neural net as input
 end
 
 gnuplot.pngfigure("output_2.png")
