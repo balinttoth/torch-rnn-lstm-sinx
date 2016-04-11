@@ -17,9 +17,9 @@ mom = 0.9 -- momentum
 
 lstm = nn.Sequencer(
    nn.Sequential()
-      :add(nn.Linear(no_param,64))
-      :add(nn.FastLSTM(64, 64))
-      :add(nn.Linear(64,no_param))
+      :add(nn.Linear(no_param,256))
+      :add(nn.FastLSTM(256, 256))
+      :add(nn.Linear(256, no_param))
       :add(nn.Tanh())
    )
 
