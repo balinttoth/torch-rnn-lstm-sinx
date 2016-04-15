@@ -95,7 +95,7 @@ output = torch.Tensor(20, 50, 1)
 inputs = input[{{}, {1}}] -- feeding the train data as input for the first batch
 
 for i = 1,input:size(2) do --,batch_size do
-  -- inputs = input[{{}, {i, i+num_samples-1}}] -- feeding the train data as input, works well
+  --inputs = input[{{}, {i}}] -- feeding the train data as input, works well
   inputs = nn.SplitTable(1):forward(inputs)
   local outputs = lstm:forward(inputs)
   -- Since LSTM outputs a table of outputs for each time step, need to combine them
