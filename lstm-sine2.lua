@@ -12,7 +12,7 @@ batch_step_size = seq_length -- how many steps between batches
 batch_size = 10 -- size of the batches
 
 max_epochs = 500 -- maximum epochs
-lr = 0.01 -- learning rate
+lr = 0.0008 -- learning rate
 mom = 0.9 -- momentum
 
 lstm = nn.Sequencer(
@@ -29,12 +29,13 @@ print(lstm)
 print(criterion)
 
 -- the input data is: x[i]=i (i=1..1000)
-data = torch.Tensor(1000):range(1,1000) --:apply(math.rad):apply(math.sin)*0.8
+data = torch.Tensor(1000):range(1,1000):apply(math.rad):apply(math.sin)*0.9
 -- Simpler data creation
 --input = data:reshape(20, 50, 1)
 input=data:reshape(50,20,1):permute(2,1,3) --:reshape(20,50,1)
 
 -- Normalize the data
+
 input_mean = data:mean()
 input_std = data:std()
 input:add(-input_mean)
@@ -91,20 +92,22 @@ end
 -- evaluation
 lstm:evaluate()
 output = torch.Tensor(20, 50, 1)
-num_samples = math.min(batch_size, input:size(2)) 
-inputs = input[{{}, {1, num_samples}}] -- feeding the train data as input
+inputs = input[{{}, {1}}] -- feeding the train data as input for the first batch
 
-for i = 1,input:size(2),batch_size do
-  num_samples = math.min(batch_size, input:size(2) - i + 1) 
-  inputs = input[{{}, {i, i+num_samples-1}}] -- feeding the train data as input
+for i = 1,input:size(2) do --,batch_size do
+  -- inputs = input[{{}, {i, i+num_samples-1}}] -- feeding the train data as input, works well
   inputs = nn.SplitTable(1):forward(inputs)
-  
   local outputs = lstm:forward(inputs)
   -- Since LSTM outputs a table of outputs for each time step, need to combine them
-  output[{{}, {i, i+num_samples-1}}] = nn.JoinTable(1):forward(outputs)
-  --inputs = output[{{}, {i, i+num_samples-1}}]:clone():cuda() -- feeding the output of the neural net as input
+  output[{{}, {i}}] = nn.JoinTable(1):forward(outputs)
+ 
+  -- feeding the output of the neural net as input 
+  inputs = output[{{}, {i}}]:clone():cuda() 
+  inputs:add(-input_mean)
+  inputs:div(input_std)
+  -----
 end
 
-gnuplot.pngfigure("output_2.png")
+gnuplot.pngfigure("output_3.png")
 gnuplot.plot({'output',output:permute(2,1,3):reshape(1000):float(),'-'}, {'target',sinus,'-'})
 gnuplot.plotflush()
